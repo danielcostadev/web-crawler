@@ -5,6 +5,7 @@ import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import groovyx.net.http.optional.Download
+import org.jsoup.select.Elements
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -16,6 +17,7 @@ class Webcrawler {
     static final String URL_TISS = "${URL_PRESTADOR}/padrao-para-troca-de-informacao-de-saude-suplementar-2013-tiss"
     static final String URL_PADRAO_ATUAL = "${URL_PRESTADOR}/padrao-para-troca-de-informacao-de-saude-suplementar-2013-tiss/setembro-2024"
     static final String URL_TABELAS_RELACIONADAS = "${URL_PRESTADOR}/padrao-para-troca-de-informacao-de-saude-suplementar-2013-tiss/padrao-tiss-tabelas-relacionadas"
+    static final String URL_HISTORICO_VERSOES = "${URL_PRESTADOR}/padrao-para-troca-de-informacao-de-saude-suplementar-2013-tiss/padrao-tiss-historico-das-versoes-dos-componentes-do-padrao-tiss"
     static final String URL_DOWNLOAD_ZIP = "${URL_PRESTADOR}/padrao-para-troca-de-informacao-de-saude-suplementar-2013-tiss/PadroTISSComunicao202301.zip"
     static final String URL_DOWNLOAD_XLSX = "${URL_BASE}arquivos/assuntos/prestadores/padrao-para-troca-de-informacao-de-saude-suplementar-tiss/padrao-tiss-tabelas-relacionadas/Tabelaerrosenvioparaanspadraotiss__1_.xlsx"
 
@@ -75,11 +77,82 @@ class Webcrawler {
 
     }
 
+    Document acessarHistoricoVersoes(){
+
+        Element botaoHistoricoVersoes = acessarTISS().select("a[href='$URL_HISTORICO_VERSOES']").first()
+        if (botaoHistoricoVersoes){
+            print "Estou acessando Histórico Versões"
+            Document paginaHistoricoVersoes = Jsoup.connect(botaoHistoricoVersoes.attr("href")).get()
+            return paginaHistoricoVersoes
+        }else {
+            throw new Exception("Botão Histórico Versões não encontrado.")
+        }
+    }
+
+    
+    List<Map<String, String>> dadosCompetencias = []
+
+    void coletarDadosTabela() {
+        try {
+            Element tabela = acessarHistoricoVersoes().select("table").first()
+
+            if (tabela) {
+                Elements linhas = tabela.select("tr").not(":first-child")
+
+                linhas.each { Element linha ->
+                    Elements colunas = linha.select("td")
+
+                    if (colunas.size() >= 3) {
+                        String competencia = colunas.get(0).text()
+                        String publicacao = colunas.get(1).text()
+                        String vigencia = colunas.get(2).text()
+
+                        if (isCompetenciaValida(competencia)) {
+                            // Adiciona os dados à lista
+                            dadosCompetencias << [
+                                    "competencia": competencia,
+                                    "publicacao": publicacao,
+                                    "vigencia": vigencia
+                            ]
+                        }
+                    }
+                }
+
+                exibirDadosFiltrados()
+            } else {
+                println "Tabela não encontrada."
+            }
+
+        } catch (Exception e) {
+            println "Erro ao coletar dados da tabela: ${e.message}"
+        }
+    }
+
+    private boolean isCompetenciaValida(String competencia) {
+        def meses = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"]
+        def partes = competencia.split("/")
+        String mes = partes[0]
+        int ano = partes[1] as int
+
+        return ano > 2016 || (ano == 2016 && meses.indexOf(mes) >= meses.indexOf("Jan"))
+    }
+
+    private void exibirDadosFiltrados() {
+        if (dadosCompetencias.isEmpty()) {
+            println "Nenhum dado encontrado a partir de janeiro de 2016."
+        } else {
+            dadosCompetencias.each { dados ->
+                println "Competência: ${dados.competencia}, Publicação: ${dados.publicacao}, Início de Vigência: ${dados.vigencia}"
+            }
+        }
+    }
+
+
+
     Element botaoDownloadXlsx = acessarTabelasRelacionadas().select("a[href='$URL_DOWNLOAD_XLSX']").first()
     Element botaoDownloadZip = acessarPadraoAtual().select("a[href='$URL_DOWNLOAD_ZIP']").first()
 
     void baixarArquivo(String urlArquivo, String nomeArquivo, String diretorio) {
-        println (acessarTabelasRelacionadas())
         try {
             if (urlArquivo) {
                 Path path = Paths.get(diretorio)

@@ -12,7 +12,7 @@ class App {
         //crawler.acessarPadraoAtual()
         crawler.baixarArquivoZip("Downloads")
         crawler.baixarArquivoXlsx("Downloads")
-
+        crawler.coletarDadosTabela()
 
     }
 
