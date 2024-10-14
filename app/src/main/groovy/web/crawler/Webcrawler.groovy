@@ -1,5 +1,6 @@
 package web.crawler
 
+import com.opencsv.CSVWriter
 import groovyx.net.http.HttpBuilder
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
@@ -28,7 +29,7 @@ class Webcrawler {
         return paginaInicial
     }
 
-    Document     acessarPrestador(){
+    Document acessarPrestador(){
 
         Element botaoPrestador = paginaPrincipal().select("a[href='$URL_PRESTADOR']").first()
         if (botaoPrestador) {
@@ -81,7 +82,7 @@ class Webcrawler {
 
         Element botaoHistoricoVersoes = acessarTISS().select("a[href='$URL_HISTORICO_VERSOES']").first()
         if (botaoHistoricoVersoes){
-            print "Estou acessando Histórico Versões"
+            println "Estou acessando Histórico Versões"
             Document paginaHistoricoVersoes = Jsoup.connect(botaoHistoricoVersoes.attr("href")).get()
             return paginaHistoricoVersoes
         }else {
@@ -89,8 +90,8 @@ class Webcrawler {
         }
     }
 
-    
-    List<Map<String, String>> dadosCompetencias = []
+
+    public static List<Map<String, String>> dadosCompetencias = []
 
     void coletarDadosTabela() {
         try {
@@ -108,7 +109,7 @@ class Webcrawler {
                         String vigencia = colunas.get(2).text()
 
                         if (isCompetenciaValida(competencia)) {
-                            // Adiciona os dados à lista
+
                             dadosCompetencias << [
                                     "competencia": competencia,
                                     "publicacao": publicacao,
@@ -118,7 +119,6 @@ class Webcrawler {
                     }
                 }
 
-                exibirDadosFiltrados()
             } else {
                 println "Tabela não encontrada."
             }
@@ -136,17 +136,6 @@ class Webcrawler {
 
         return ano > 2016 || (ano == 2016 && meses.indexOf(mes) >= meses.indexOf("Jan"))
     }
-
-    private void exibirDadosFiltrados() {
-        if (dadosCompetencias.isEmpty()) {
-            println "Nenhum dado encontrado a partir de janeiro de 2016."
-        } else {
-            dadosCompetencias.each { dados ->
-                println "Competência: ${dados.competencia}, Publicação: ${dados.publicacao}, Início de Vigência: ${dados.vigencia}"
-            }
-        }
-    }
-
 
 
     Element botaoDownloadXlsx = acessarTabelasRelacionadas().select("a[href='$URL_DOWNLOAD_XLSX']").first()
@@ -167,7 +156,7 @@ class Webcrawler {
                     Download.toFile(delegate, new File("${diretorio}/${nomeArquivo}"))
                 }
 
-                println "Download concluído com sucesso e salvo em ${diretorio}/${nomeArquivo}..."
+                println "Download concluído com sucesso e salvo em ${diretorio}/${nomeArquivo}!"
             } else {
                 throw new Exception("URL de download não fornecida.")
             }
@@ -193,4 +182,46 @@ class Webcrawler {
             println "Botão de Download XLSX não encontrado."
         }
     }
+
+    void criarArquivoCSV(String caminho, List<Map<String, String>> dadosCompetencias) {
+        try {
+
+            coletarDadosTabela()
+
+            File diretorio = new File(caminho)
+            if (!diretorio.exists()) {
+                diretorio.mkdirs()
+            }
+
+            CSVWriter writer = new CSVWriter(new FileWriter("${caminho}/HistoricoVersoes.csv"))
+
+            String[] cabecalho = ["Competência", "Publicação", "Início de Vigência"]
+            writer.writeNext(cabecalho)
+
+            if (dadosCompetencias.isEmpty()) {
+                println "Nenhum dado encontrado a partir de janeiro de 2016."
+            } else {
+
+                dadosCompetencias.each { dado ->
+                    String[] dados = [
+                            dado["competencia"],
+                            dado["publicacao"],
+                            dado["vigencia"]
+                    ]
+                    writer.writeNext(dados)
+                }
+            }
+
+            println "Download concluído com sucesso e salvo em ${caminho}/HistoricoVersoes.csv!"
+
+            writer.close()
+
+        } catch (IOException e) {
+            println "Erro ao criar arquivo CSV: ${e.getMessage()}"
+        }
+    }
+
 }
+
+
+

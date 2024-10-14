@@ -10,6 +10,7 @@ repositories {
 }
 
 dependencies {
+    implementation 'com.opencsv:opencsv:5.7.1'
     implementation 'org.codehaus.groovy:groovy-all:3.0.13'
     implementation 'com.google.guava:guava:31.1-jre'
     implementation 'io.github.http-builder-ng:http-builder-ng-core:1.0.4'

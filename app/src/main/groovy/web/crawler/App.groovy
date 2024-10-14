@@ -6,14 +6,10 @@ class App {
 
         Webcrawler crawler = new Webcrawler()
 
-        //crawler.paginaPrincipal()
-        //crawler.acessarPrestador()
-        //crawler.acessarTISS()
-        //crawler.acessarPadraoAtual()
         crawler.baixarArquivoZip("Downloads")
+        crawler.criarArquivoCSV("CSV", crawler.dadosCompetencias)
         crawler.baixarArquivoXlsx("Downloads")
-        crawler.coletarDadosTabela()
-
+        
     }
 
 }
