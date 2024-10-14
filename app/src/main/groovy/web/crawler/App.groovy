@@ -11,6 +11,8 @@ class App {
         //crawler.acessarTISS()
         //crawler.acessarPadraoAtual()
         crawler.baixarArquivoZip("Downloads")
+        crawler.baixarArquivoXlsx("Downloads")
+
 
     }
 
