@@ -9,7 +9,7 @@ class App {
         crawler.baixarArquivoZip("Downloads")
         crawler.criarArquivoCSV("CSV", crawler.dadosCompetencias)
         crawler.baixarArquivoXlsx("Downloads")
-        
+
     }
 
 }

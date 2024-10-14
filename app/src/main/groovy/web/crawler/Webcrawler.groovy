@@ -90,7 +90,6 @@ class Webcrawler {
         }
     }
 
-
     public static List<Map<String, String>> dadosCompetencias = []
 
     void coletarDadosTabela() {
@@ -212,7 +211,7 @@ class Webcrawler {
                 }
             }
 
-            println "Download concluído com sucesso e salvo em ${caminho}/HistoricoVersoes.csv!"
+            println "Arquivo criado com sucesso em: ${caminho}/HistoricoVersoes.csv!"
 
             writer.close()
 

@@ -5,6 +5,9 @@ plugins {
     id 'application'
 }
 
+group = 'web.crawler'
+version = '1.0-SNAPSHOT'
+
 repositories {
     mavenCentral()
 }
@@ -36,4 +39,23 @@ application {
 tasks.named('test') {
     // Use JUnit Platform for unit tests.
     useJUnitPlatform()
+}
+
+application {
+    mainClassName = 'web.crawler.App'
+}
+
+
+jar {
+    manifest {
+        attributes(
+                'Main-Class': 'web.crawler.App'
+        )
+    }
+
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
